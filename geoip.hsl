@@ -1,0 +1,40 @@
+function geoip_object()
+{
+	$object = file("file://GeoIPCountryWhois.csv");
+	foreach ($object as $k => $x)
+	{
+		$x = explode(",", $x);
+		$object[$k] = [number($x[2][1:-1]), number($x[3][1:-1]), $x[5][1:-1]];
+	}
+	return $object;
+}
+
+function geoip($senderip)
+{
+	$ip = unpack("N*", inet_pton($senderip));
+	if (length($ip) != 1)
+		return;
+	$ip = $ip[0];
+
+	$lst = cache [] geoip_object();
+	$min = 0;
+	$max = length($lst);
+	$log = log($max, 2);
+	$i = 0;
+	while ($i <= $log)
+	{
+		$mid = floor(($min + $max) / 2);
+		if ($ip > $lst[$mid][1]) {
+			$min = $mid;
+			$i += 1;
+			continue;
+		}
+		if ($ip < $lst[$mid][0]) {
+			$max = $mid;
+			$i += 1;
+			continue;
+		}
+		return $lst[$mid][2];
+	}
+	return;
+}
